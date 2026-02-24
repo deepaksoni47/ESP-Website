@@ -92,6 +92,20 @@
 </div>
 <div class="module_group" id="module_group_2">
     <div class="module_group_header">
+        Onsite Admin
+    </div>
+    <div class="button_wrapper">
+        {% if program|hasModule:"OnSiteAdminDashboard" %}
+        <div class="module_button">
+            <a href="/onsite/{{ program.getUrlBase }}/dashboard"><button type="button" class="module_link_large">
+                <div class="module_link_main"><i class="glyphicon glyphicon-dashboard"></i> Admin Dashboard</div>
+            </button></a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<div class="module_group" id="module_group_2">
+    <div class="module_group_header">
         Student Information
     </div>
     <div class="button_wrapper">
