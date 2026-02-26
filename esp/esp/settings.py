@@ -37,6 +37,35 @@ import warnings
 import tempfile
 import django
 
+
+try:
+    from PIL import Image
+
+    class _CaseInsensitiveExtDict(dict):
+        """Dict subclass that normalises string keys to lowercase."""
+
+        def __getitem__(self, key):
+            return super().__getitem__(key.lower() if isinstance(key, str) else key)
+
+        def __contains__(self, key):
+            return super().__contains__(key.lower() if isinstance(key, str) else key)
+
+        def get(self, key, default=None):
+            return super().get(key.lower() if isinstance(key, str) else key, default)
+
+        def __setitem__(self, key, value):
+            super().__setitem__(key.lower() if isinstance(key, str) else key, value)
+
+        def setdefault(self, key, default=None):
+            return super().setdefault(key.lower() if isinstance(key, str) else key, default)
+
+    _ext = _CaseInsensitiveExtDict(Image.EXTENSION)
+    if hasattr(Image, 'registered_extensions'):
+        _ext.update(Image.registered_extensions())
+    Image.EXTENSION = _ext
+except Exception:
+    pass
+
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
 # Django expects BASE_DIR
 BASE_DIR = PROJECT_ROOT
