@@ -60,9 +60,10 @@ def _apply_filebrowser_patches():
         for fileobject in fileobjects:
             _root, ext = os.path.splitext(fileobject.filename)
             ext_lower = ext.lower()
-            f = fileobject.site.storage.open(fileobject.path)
-            im = _PILImage.open(f)
-            new_image = im.transpose(operation)
+            
+            with fileobject.site.storage.open(fileobject.path) as f:
+                im = _PILImage.open(f)
+                new_image = im.transpose(operation)
 
             tmpfile = DjangoFile(tempfile.NamedTemporaryFile())
             img_format = _PILImage.EXTENSION.get(ext_lower) or im.format
@@ -85,7 +86,6 @@ def _apply_filebrowser_patches():
                 fileobject.delete_versions()
             finally:
                 tmpfile.close()
-            f.close()
 
             messages.add_message(
                 request, messages.SUCCESS,
