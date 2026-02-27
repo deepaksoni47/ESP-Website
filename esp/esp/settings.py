@@ -63,8 +63,12 @@ try:
     if hasattr(Image, 'registered_extensions'):
         _ext.update(Image.registered_extensions())
     Image.EXTENSION = _ext
-except Exception:
-    pass
+except ImportError:
+    import warnings
+    warnings.warn(
+        "PIL/Pillow is not installed; image extension normalization is disabled.",
+        ImportWarning,
+    )
 
 PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
 # Django expects BASE_DIR

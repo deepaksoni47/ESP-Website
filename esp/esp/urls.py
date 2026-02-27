@@ -59,16 +59,17 @@ def _apply_filebrowser_patches():
     def _patched_transpose_image(request, fileobjects, operation):
         for fileobject in fileobjects:
             _root, ext = os.path.splitext(fileobject.filename)
+            ext_lower = ext.lower()
             f = fileobject.site.storage.open(fileobject.path)
             im = _PILImage.open(f)
             new_image = im.transpose(operation)
 
             tmpfile = DjangoFile(tempfile.NamedTemporaryFile())
-            img_format = _PILImage.EXTENSION[ext]
+            img_format = _PILImage.EXTENSION.get(ext_lower) or im.format
             try:
                 new_image.save(tmpfile, format=img_format,
                                quality=VERSION_QUALITY,
-                               optimize=(ext.lower() != '.gif'))
+                               optimize=(ext_lower != '.gif'))
             except IOError:
                 new_image.save(tmpfile, format=img_format,
                                quality=VERSION_QUALITY)
@@ -88,8 +89,8 @@ def _apply_filebrowser_patches():
 
             messages.add_message(
                 request, messages.SUCCESS,
-                _lazy("Action applied successfully to '%s'"
-                      % fileobject.filename))
+                _lazy("Action applied successfully to '%s'") %
+                fileobject.filename)
 
     _fb_actions.transpose_image = _patched_transpose_image
 
@@ -107,8 +108,6 @@ def _apply_filebrowser_patches():
             new_name = convert_filename(self.cleaned_data['name'])
             new_path = os.path.join(self.path, new_name)
             current_path = self.fileobject.path
-
-            # Case-insensitive comparison: convert_filename lowercases the
             is_same = new_path.lower() == current_path.lower()
 
             if self.site.storage.isdir(new_path) and not is_same:
