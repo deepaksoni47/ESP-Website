@@ -108,6 +108,8 @@ def _apply_filebrowser_patches():
             new_name = convert_filename(self.cleaned_data['name'])
             new_path = os.path.join(self.path, new_name)
             current_path = self.fileobject.path
+
+            # Case-insensitive comparison: convert_filename lowercases the file/folder name
             is_same = new_path.lower() == current_path.lower()
 
             if self.site.storage.isdir(new_path) and not is_same:
