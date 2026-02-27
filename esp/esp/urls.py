@@ -55,12 +55,11 @@ def _apply_filebrowser_patches():
     from filebrowser.settings import VERSION_QUALITY
     from filebrowser.utils import convert_filename
 
-
     def _patched_transpose_image(request, fileobjects, operation):
         for fileobject in fileobjects:
             _root, ext = os.path.splitext(fileobject.filename)
             ext_lower = ext.lower()
-            
+
             with fileobject.site.storage.open(fileobject.path) as f:
                 im = _PILImage.open(f)
                 new_image = im.transpose(operation)
@@ -94,7 +93,6 @@ def _apply_filebrowser_patches():
 
     _fb_actions.transpose_image = _patched_transpose_image
 
-
     def _patched_clean_name(self):
         if self.cleaned_data['name']:
             from filebrowser.settings import FOLDER_REGEX
@@ -109,8 +107,9 @@ def _apply_filebrowser_patches():
             new_path = os.path.join(self.path, new_name)
             current_path = self.fileobject.path
 
-            # Case-insensitive comparison: convert_filename lowercases the file/folder name
-            is_same = new_path.lower() == current_path.lower()
+            # Case-insensitive comparison:
+            # convert_filename lowercases the file/folder name
+            is_same = (new_path.lower() == current_path.lower())
 
             if self.site.storage.isdir(new_path) and not is_same:
                 from django.forms import ValidationError
@@ -123,6 +122,7 @@ def _apply_filebrowser_patches():
         return self.cleaned_data['name']
 
     _fb_forms.ChangeForm.clean_name = _patched_clean_name
+
 
 _apply_filebrowser_patches()
 del _apply_filebrowser_patches

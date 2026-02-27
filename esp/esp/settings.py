@@ -45,19 +45,29 @@ try:
         """Dict subclass that normalises string keys to lowercase."""
 
         def __getitem__(self, key):
-            return super().__getitem__(key.lower() if isinstance(key, str) else key)
+            normalized_key = (key.lower() if isinstance(key, str)
+                              else key)
+            return super().__getitem__(normalized_key)
 
         def __contains__(self, key):
-            return super().__contains__(key.lower() if isinstance(key, str) else key)
+            normalized_key = (key.lower() if isinstance(key, str)
+                              else key)
+            return super().__contains__(normalized_key)
 
         def get(self, key, default=None):
-            return super().get(key.lower() if isinstance(key, str) else key, default)
+            normalized_key = (key.lower() if isinstance(key, str)
+                              else key)
+            return super().get(normalized_key, default)
 
         def __setitem__(self, key, value):
-            super().__setitem__(key.lower() if isinstance(key, str) else key, value)
+            normalized_key = (key.lower() if isinstance(key, str)
+                              else key)
+            super().__setitem__(normalized_key, value)
 
         def setdefault(self, key, default=None):
-            return super().setdefault(key.lower() if isinstance(key, str) else key, default)
+            normalized_key = (key.lower() if isinstance(key, str)
+                              else key)
+            return super().setdefault(normalized_key, default)
 
         def pop(self, key, *args):
             """Remove specified key and return the corresponding value.
@@ -75,9 +85,10 @@ try:
                 self[k] = v
 
         def __delitem__(self, key):
-            """Delete item with given key, treating string keys case-insensitively."""
-            key = key.lower() if isinstance(key, str) else key
-            return super().__delitem__(key)
+            """Delete item for given key (case-insensitive)."""
+            normalized_key = (key.lower() if isinstance(key, str)
+                              else key)
+            return super().__delitem__(normalized_key)
 
         def keys(self):
             """Return a new view of the dictionary's keys."""
@@ -88,7 +99,7 @@ try:
             return super().values()
 
         def items(self):
-            """Return a new view of the dictionary's items (key, value pairs)."""
+            """Return a view of dictionary items."""
             return super().items()
 
         def __iter__(self):
@@ -101,7 +112,8 @@ try:
     Image.EXTENSION = _ext
 except ImportError:
     warnings.warn(
-        "PIL/Pillow is not installed; image extension normalization is disabled.",
+        "PIL/Pillow not installed; image extension "
+        "normalization disabled.",
         ImportWarning,
     )
 
