@@ -55,7 +55,7 @@ def _apply_filebrowser_patches():
     from filebrowser.settings import VERSION_QUALITY
     from filebrowser.utils import convert_filename
 
-    
+
     def _patched_transpose_image(request, fileobjects, operation):
         for fileobject in fileobjects:
             _root, ext = os.path.splitext(fileobject.filename)
@@ -94,7 +94,7 @@ def _apply_filebrowser_patches():
 
     _fb_actions.transpose_image = _patched_transpose_image
 
-   
+
     def _patched_clean_name(self):
         if self.cleaned_data['name']:
             from filebrowser.settings import FOLDER_REGEX
