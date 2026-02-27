@@ -59,12 +59,47 @@ try:
         def setdefault(self, key, default=None):
             return super().setdefault(key.lower() if isinstance(key, str) else key, default)
 
+        def pop(self, key, *args):
+            """Remove specified key and return the corresponding value.
+            String keys are matched case-insensitively.
+            """
+            key = key.lower() if isinstance(key, str) else key
+            return super().pop(key, *args)
+
+        def update(self, *args, **kwargs):
+            """Update the dictionary from mapping/iterable and keyword args.
+            String keys are normalised to lowercase via __setitem__.
+            """
+            other = dict(*args, **kwargs)
+            for k, v in other.items():
+                self[k] = v
+
+        def __delitem__(self, key):
+            """Delete item with given key, treating string keys case-insensitively."""
+            key = key.lower() if isinstance(key, str) else key
+            return super().__delitem__(key)
+
+        def keys(self):
+            """Return a new view of the dictionary's keys."""
+            return super().keys()
+
+        def values(self):
+            """Return a new view of the dictionary's values."""
+            return super().values()
+
+        def items(self):
+            """Return a new view of the dictionary's items (key, value pairs)."""
+            return super().items()
+
+        def __iter__(self):
+            """Return an iterator over the dictionary's keys."""
+            return super().__iter__()
+
     _ext = _CaseInsensitiveExtDict(Image.EXTENSION)
     if hasattr(Image, 'registered_extensions'):
         _ext.update(Image.registered_extensions())
     Image.EXTENSION = _ext
 except ImportError:
-    import warnings
     warnings.warn(
         "PIL/Pillow is not installed; image extension normalization is disabled.",
         ImportWarning,
