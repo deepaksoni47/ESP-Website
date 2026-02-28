@@ -58,7 +58,7 @@ class ResizeImageField(forms.ImageField):
             from PIL import Image
             from io import BytesIO
 
-            filename = file.name
+            filename = file.name.lower()
 
             picturefile = BytesIO()
             if hasattr(file, 'temporary_file_path'):
