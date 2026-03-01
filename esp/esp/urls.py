@@ -42,105 +42,6 @@ from django.views.generic import TemplateView
 from django.views.generic.base import RedirectView
 from filebrowser.sites import site as filebrowser_site
 
-
-def _patch_filebrowser_transpose():
-    """Patch filebrowser's transpose_image to properly handle file overwrites.
-
-    The original transpose_image doesn't delete the original before saving,
-    causing storage.save() to return a mangled filename. We delete first.
-
-    Also patch ChangeForm.clean_name() to do case-insensitive comparison
-    since filenames are normalized to lowercase but the form validation
-    was doing case-sensitive string comparison.
-    """
-    import os
-    import tempfile
-    from PIL import Image as _PILImage
-    from django.core.files import File as DjangoFile
-    from django.contrib import messages
-    from django.utils.translation import gettext_lazy as _lazy
-    import filebrowser.actions as _fb_actions
-    import filebrowser.forms as _fb_forms
-    from filebrowser.settings import VERSION_QUALITY
-    from filebrowser.utils import convert_filename
-
-    def _patched_transpose_image(request, fileobjects, operation):
-        for fileobject in fileobjects:
-            _root, ext = os.path.splitext(fileobject.filename)
-            ext_lower = ext.lower()
-
-            with fileobject.site.storage.open(fileobject.path) as f:
-                im = _PILImage.open(f)
-                new_image = im.transpose(operation)
-
-            tmpfile = DjangoFile(tempfile.NamedTemporaryFile())
-            img_format = _PILImage.EXTENSION.get(ext_lower) or im.format
-            try:
-                new_image.save(tmpfile, format=img_format,
-                               quality=VERSION_QUALITY,
-                               optimize=(ext_lower != '.gif'))
-            except IOError:
-                new_image.save(tmpfile, format=img_format,
-                               quality=VERSION_QUALITY)
-
-            original_path = fileobject.path
-            try:
-                # Delete original before saving to avoid storage collision
-                fileobject.site.storage.delete(original_path)
-                saved_under = fileobject.site.storage.save(
-                    original_path, tmpfile)
-                if saved_under != original_path:
-                    fileobject.site.storage.move(
-                        saved_under, original_path, allow_overwrite=True)
-                fileobject.delete_versions()
-            finally:
-                tmpfile.close()
-
-            messages.add_message(
-                request, messages.SUCCESS,
-                _lazy("Action applied successfully to '%s'") %
-                fileobject.filename)
-
-    _fb_actions.transpose_image = _patched_transpose_image
-
-    def _patched_clean_name(self):
-        """Filebrowser's ChangeForm.clean_name with case-insensitive comparison.
-
-        Files are normalized to lowercase, but the original validation did
-        case-sensitive path comparison. This causes false "file exists" errors.
-        """
-        if self.cleaned_data['name']:
-            from filebrowser.settings import FOLDER_REGEX
-            import re
-            if not re.search(FOLDER_REGEX, self.cleaned_data['name'], re.U):
-                from django.forms import ValidationError
-                raise ValidationError(
-                    _lazy('Only letters, numbers, underscores, spaces '
-                          'and hyphens are allowed.'))
-
-            new_name = convert_filename(self.cleaned_data['name'])
-            new_path = os.path.join(self.path, new_name)
-            current_path = self.fileobject.path
-
-            # Case-insensitive comparison to match normalized filenames
-            is_same = new_path.lower() == current_path.lower()
-
-            if self.site.storage.isdir(new_path) and not is_same:
-                from django.forms import ValidationError
-                raise ValidationError(_lazy('The Folder already exists.'))
-            elif self.site.storage.isfile(new_path) and not is_same:
-                from django.forms import ValidationError
-                raise ValidationError(_lazy('The File already exists.'))
-
-            return new_name
-        return self.cleaned_data['name']
-
-    _fb_forms.ChangeForm.clean_name = _patched_clean_name
-
-
-_patch_filebrowser_transpose()
-del _patch_filebrowser_transpose
-
 # main list of apps
 import argcache.urls
 import debug_toolbar
@@ -183,6 +84,7 @@ urlpatterns += [
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/ajax_qsd/?$', esp.qsd.views.ajax_qsd),
     url(r'^admin/ajax_qsd_preview/?$', esp.qsd.views.ajax_qsd_preview),
+    url(r'^admin/ajax_qsd_image_upload/?$', esp.qsd.views.ajax_qsd_image_upload),
     url(r'^admin/ajax_autocomplete/?', esp.db.views.ajax_autocomplete),
     url(r'^admin/filebrowser/', filebrowser_site.urls),
     url(r'^admin/', admin_site.urls),
