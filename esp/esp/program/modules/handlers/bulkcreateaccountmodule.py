@@ -2,7 +2,7 @@ from esp.program.modules.base import (ProgramModuleObj, needs_admin,
                                       main_call, aux_call)
 from esp.utils.web import render_to_response
 from esp.middleware import ESPError
-from esp.users.models import ESPUser, ContactInfo, StudentInfo
+from esp.users.models import ESPUser, ContactInfo, StudentInfo, TeacherInfo
 from esp.program.models import RegistrationProfile
 from django.contrib.auth.models import Group
 import random
@@ -211,14 +211,24 @@ def create_user_with_profile(username, password, program, groups):
     if 'Student' in group_names:
         # Create StudentInfo with a default graduation year
         default_grade = 9
-        yog = ESPUser.YOGFromGrade(default_grade,
-                                   ESPUser.program_schoolyear(program))
+        if program:
+            yog = ESPUser.YOGFromGrade(default_grade,
+                                       ESPUser.program_schoolyear(program))
+        else:
+            yog = ESPUser.YOGFromGrade(default_grade,
+                                       ESPUser.current_schoolyear())
         student_info = StudentInfo(
             user=user,
             graduation_year=yog
         )
         student_info.save()
         reg_profile.student_info = student_info
+
+    if 'Teacher' in group_names:
+        # Create TeacherInfo for teacher accounts
+        teacher_info = TeacherInfo(user=user)
+        teacher_info.save()
+        reg_profile.teacher_info = teacher_info
 
     reg_profile.save()
 
